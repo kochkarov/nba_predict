@@ -1,5 +1,5 @@
 import requests
-from team.models import Team, TeamSchema, DivisionSchema
+from team.models import Team, TeamSchema, Division, DivisionSchema, Conference
 from game.models import Game, GameSchema, TeamScoreSchema
 import pydantic
 from jinja2 import Template
@@ -46,6 +46,9 @@ class ApiNba:
         json = self.get_json(self.links['teams'])['league']['standard']
         _ = pydantic.parse_obj_as(list[DivisionSchema], json)
         _ = pydantic.parse_obj_as(list[TeamSchema], json)
+        set_code(Conference)
+        set_code(Division)
+        set_code(Team)
         return
 
     def get_and_save_games(self, season: int):

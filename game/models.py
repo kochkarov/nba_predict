@@ -65,6 +65,9 @@ class Game(models.Model):
     def __str__(self):
         return f'{self.game_date} {self.team_home} {self.score_home}:{self.score_visitor} {self.team_visitor}'
 
+    def human_repr(self):
+        return f'{self.team_home.name}  {self.score_home}:{self.score_visitor} {self.team_visitor.name}'
+
     def is_win(self):
         return 1 if self.score_home > self.score_visitor else 0
 
