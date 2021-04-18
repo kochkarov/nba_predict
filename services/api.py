@@ -1,10 +1,10 @@
 import requests
 from team.models import Team, TeamSchema, Division, DivisionSchema, Conference
-from game.models import Game, GameSchema, TeamScoreSchema
+from game.models import GameSchema
 import pydantic
 from jinja2 import Template
 
-DOMAIN = 'http://data.nba.net'
+DOMAIN = 'https://data.nba.net'
 START_PATH = '/10s/prod/v2/today.json'
 SCHEDULE = '/prod/v1/{{season}}/schedule.json'
 
@@ -31,6 +31,7 @@ class ApiNba:
 
     def __init__(self):
         self.links = self.get_available_json_links()
+        self.current_season = self.get_current_season()
         return
 
     @staticmethod
@@ -38,6 +39,10 @@ class ApiNba:
         url = DOMAIN + path
         response = requests.request("GET", url)
         return response.json()
+
+    def get_current_season(self):
+        key_str = self.links['teams']
+        return int(key_str.split('/')[-2])
 
     def get_available_json_links(self):
         return self.get_json(START_PATH)['links']
@@ -51,7 +56,8 @@ class ApiNba:
         set_code(Team)
         return
 
-    def get_and_save_games(self, season: int):
-        link = Template(SCHEDULE).render(season=season)
-        game_list = self.get_json(link)['league']['standard']
-        return pydantic.parse_obj_as(list[GameSchema], add_season_key(game_list, season))
+    def get_and_save_games(self, season=0):
+        season = season if season else self.current_season
+        game_list = self.get_json(Template(SCHEDULE).render(season=season))['league']['standard']
+        _ = pydantic.parse_obj_as(list[GameSchema], add_season_key(game_list, season))
+        return

@@ -4,3 +4,8 @@ from django.shortcuts import render
 
 def index(request):
     return render(request, 'game/index.html')
+
+
+def day_archive(request, day):
+    print(request, day)
+    return render(request, 'game/indexday.html')

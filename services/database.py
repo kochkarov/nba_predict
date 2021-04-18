@@ -38,9 +38,9 @@ class DataNba:
         # cls.game_objects = Game.objects.filter(season=2018)
         cls.game_objects = Game.objects.all()
 
-        columns = ['game_id', 'season', 'date', 'human', 'team', 'opponent', 'score_team', 'score_opp']
-        cls.data = pd.DataFrame([[game.game_id, game.season, pd.Timestamp(game.game_date), game.human_repr(),
-                                  game.team_home.code, game.team_visitor.code,
+        columns = ['game_id', 'season', 'date', 'added', 'human', 'team', 'opponent', 'score_team', 'score_opp']
+        cls.data = pd.DataFrame([[game.game_id, game.season, pd.Timestamp(game.game_date), pd.Timestamp(game.added),
+                                  game.human_repr(), game.team_home.code, game.team_visitor.code,
                                   game.score_home, game.score_visitor] for game in cls.game_objects],
                                 columns=columns)
 
