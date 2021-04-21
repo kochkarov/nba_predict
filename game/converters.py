@@ -2,10 +2,10 @@ import datetime
 
 
 class DateConverter:
-    regex = '[0-9]{8}'
+    regex = '\d{4}-\d{2}-\d{2}'
 
     def to_python(self, value):
-        return datetime.datetime.strptime(value, '%Y%m%d')
+        return datetime.datetime.strptime(value, '%Y-%m-%d')
 
     def to_url(self, value):
-        return datetime.datetime.strftime(value, '%Y%m%d')
+        return value
