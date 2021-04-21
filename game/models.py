@@ -39,7 +39,6 @@ class GameSchema(BaseModel):
             return values
 
         if not isinstance(values['game_start_utc'], datetime.datetime):
-            print(values['game_start_utc'])
             values['game_start_utc'] = datetime.datetime.strptime(values['game_start_utc'], '%Y-%m-%d')
 
         us_time = values['game_start_utc'].astimezone(ZoneInfo('US/Central'))
