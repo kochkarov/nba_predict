@@ -59,6 +59,9 @@ class Team(BaseTeamModel):
     def __str__(self):
         return self.name_full
 
+    def logo(self):
+        return f'{self.name}.svg'
+
     class Meta:
         verbose_name = 'Команда'
         verbose_name_plural = 'Команды'

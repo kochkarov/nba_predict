@@ -23,6 +23,8 @@ class DataNba:
         cls.add_mirrored_data()
         cls.add_total_columns()
         cls.add_onehot_columns(['team', 'opponent'])
+        cls.add_last_result_columns('team', 'is_win', 20)
+        cls.add_last_result_columns('opponent', 'is_win', 20)
 
     @classmethod
     def create_teams(cls):
@@ -35,7 +37,6 @@ class DataNba:
     @classmethod
     def create_games(cls):
         print('Create DataFrame...')
-        # cls.game_objects = Game.objects.filter(season=2018)
         cls.game_objects = Game.objects.all()
 
         columns = ['game_id', 'season', 'date', 'added', 'human', 'team', 'opponent', 'score_team', 'score_opp']
@@ -75,7 +76,8 @@ class DataNba:
         mirror = cls.data.copy()
         mirror.columns = cls.swap_column()
         mirror = mirror[cls.data.columns]
-        cls.data = cls.data.append(mirror, ignore_index=True).sort_values(by=['date', 'game_id', 'is_road_game'])
+        cls.data = cls.data.append(mirror, ignore_index=True).sort_values(by=['date', 'game_id', 'is_road_game'],
+                                                                          ignore_index=True)
         return
 
     @classmethod
@@ -94,7 +96,19 @@ class DataNba:
         return
 
     @classmethod
-    def get_last_result(cls, team: int, date, column: str, count=10):
-        df = cls.data[(cls.data.date < date) & (cls.data.team == team)][-count:]
-        print(len(df))
-        return [df[column].values if (len(df.season.unique()) == 1) & (len(df) == count) else np.full(count, None)]
+    def get_last_result(cls, row, filter_column, data_column, count):
+        return cls.data[data_column][(cls.data['date'] < row['date']) &
+                                     (cls.data[filter_column] == row[filter_column]) &
+                                     (cls.data.season == row.season)].values[:-count-1:-1]
+
+    @classmethod
+    def add_last_result_columns(cls, filter_column, data_column, count=20):
+        hg = cls.data[cls.data.is_home_game == 1]
+        result = pd.DataFrame([cls.get_last_result(row, filter_column, data_column, count) for _, row in hg.iterrows()],
+                              index=hg.index, columns=cls.generate_names(filter_column, data_column, count))
+        cls.data = cls.data.join(result)
+        return
+
+    @staticmethod
+    def generate_names(filter_column, data_column, count):
+        return [f'{filter_column}_{data_column}-{i}' for i in range(1, count+1)]
