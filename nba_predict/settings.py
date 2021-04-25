@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django_extensions',
 
     'game.apps.GameConfig',
-    'team.apps.TeamConfig'
+    'team.apps.TeamConfig',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -126,3 +127,5 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
+
+LOGIN_REDIRECT_URL = "dashboard"

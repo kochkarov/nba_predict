@@ -25,6 +25,8 @@ class DataNba:
         cls.add_onehot_columns(['team', 'opponent'])
         cls.add_last_result_columns('team', 'is_win', 20)
         cls.add_last_result_columns('opponent', 'is_win', 20)
+        cls.add_last_result_columns('team', 'diff_team', 20)
+        cls.add_last_result_columns('opponent', 'diff_team', 20)
 
     @classmethod
     def create_teams(cls):
@@ -47,12 +49,15 @@ class DataNba:
 
         cls.data['is_home_game'] = 1
         cls.data['is_road_game'] = 0
-        cls.data['is_win'] = np.where(cls.data.score_team > cls.data.score_opp, 1, 0)
+        cls.data['is_win'] = np.where(cls.data.score_team > cls.data.score_opp, 1, 0) + \
+                             np.where(cls.data.score_team == 0, np.nan, 0)
         cls.data['is_lose'] = 1 - cls.data.is_win
         cls.data['is_home_win'] = cls.data.is_win
         cls.data['is_home_lose'] = 1 - cls.data.is_home_win
         cls.data['is_road_win'] = 0
         cls.data['is_road_lose'] = 0
+        cls.data['diff_team'] = cls.data.score_team - cls.data.score_opp
+        cls.data['diff_opp'] = cls.data.score_opp - cls.data.score_team
         return
 
     @classmethod
@@ -63,7 +68,8 @@ class DataNba:
     @classmethod
     def swap_column(cls):
         swap_dict = {'team': 'opponent', 'score_team': 'score_opp', 'is_home_game': 'is_road_game',
-                     'is_win': 'is_lose', 'is_home_win': 'is_road_lose', 'is_home_lose': 'is_road_win'}
+                     'is_win': 'is_lose', 'is_home_win': 'is_road_lose', 'is_home_lose': 'is_road_win',
+                     'diff_team': 'diff_opp'}
 
         columns = cls.data.columns.copy(deep=True)
         for key, value in swap_dict.items():
@@ -81,12 +87,24 @@ class DataNba:
         return
 
     @classmethod
-    def get_columns(cls, mask: str):
-        return list(filter(re.compile(mask).search, cls.data.columns))
+    def get_columns(cls, column_mask: list):
+        columns = []
+        for mask in column_mask:
+            if mask in cls.data.columns:
+                columns += [mask]
+                continue
+
+            masked_columns = list(filter(re.compile(mask).search, cls.data.columns))
+            if masked_columns:
+                columns += masked_columns
+                continue
+
+            raise Exception(f'Unknown column: {mask}')
+        return columns
 
     @classmethod
     def add_total_columns(cls):
-        columns = cls.get_columns('is_')
+        columns = cls.get_columns(['is_'])
         for season in cls.data.season.unique():
             for team in cls.teams.index:
                 idx = (cls.data.season == season) & (cls.data.team == team)
@@ -99,7 +117,7 @@ class DataNba:
     def get_last_result(cls, row, filter_column, data_column, count):
         return cls.data[data_column][(cls.data['date'] < row['date']) &
                                      (cls.data[filter_column] == row[filter_column]) &
-                                     (cls.data.season == row.season)].values[:-count-1:-1]
+                                     (cls.data.season == row.season)].values[:-count - 1:-1]
 
     @classmethod
     def add_last_result_columns(cls, filter_column, data_column, count=20):
@@ -111,4 +129,4 @@ class DataNba:
 
     @staticmethod
     def generate_names(filter_column, data_column, count):
-        return [f'{filter_column}_{data_column}-{i}' for i in range(1, count+1)]
+        return [f'{filter_column}_{data_column}-{i}' for i in range(1, count + 1)]

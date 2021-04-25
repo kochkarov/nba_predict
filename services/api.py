@@ -56,7 +56,7 @@ class ApiNba:
         set_code(Team)
         return
 
-    def get_and_save_games(self, season=0):
+    def update_data(self, season=0):
         season = season if season else self.current_season
         game_list = self.get_json(Template(SCHEDULE).render(season=season))['league']['standard']
         _ = pydantic.parse_obj_as(list[GameSchema], add_season_key(game_list, season))
