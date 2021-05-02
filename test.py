@@ -14,5 +14,5 @@ apinba = ApiNba()
 # Division.objects.all().delete()
 # Conference.objects.all().delete()
 
-for year in range(2015, 2020):
-    apinba.get_and_save_games(year)
+for year in range(2015, 2021):
+    apinba.update_data(year)

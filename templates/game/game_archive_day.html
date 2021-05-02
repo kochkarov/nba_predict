@@ -1,31 +1,80 @@
-{% extends 'game/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}
     <title> {{ day|date:"d.m.Y" }} </title>
-    <a href="{% url 'today_archive_day' %}"> Календарь </a>
-    <h2>Результаты игр {{ day|date:"Y-m-d" }}</h2>
 {% endblock %}
 
+
 {% block content %}
-<p>
-    {% if previous_day %}
-        <a href="{% url 'archive_day' previous_day.year previous_day.month previous_day.day %}">Previous Day {{ previous_day|date:"Y-m-d" }}</a>
-    {% endif %}
-    {% if previous_day and next_day %}--{% endif %}
-    {% if next_day %}
-        <a href="{% url 'archive_day' next_day.year next_day.month next_day.day %}">Next Day {{ next_day|date:"Y-m-d" }}</a>
-    {% endif %}
-</p>
+    <div class="game">
+        <div class="container">
+            <!-- <h1>Результаты игр {{ day|date:"d.m.Y" }}</h1> -->
 
-<ul>
-    {% for game in object_list %}
-        <li>{{ game.game_start_utc|date:"Y-m-d" }} {{ game.game_start_utc|time:"h:i" }}: {{ game.team_home }} {{ game.score_home }}:{{ game.score_visitor }} {{ game.team_visitor }}</li>
-        <img src="{% static game.team_home.logo %}" alt="logo" width="50">
-        <img src="{% static game.team_visitor.logo %}" alt="logo" width="50">
-    {% empty %}
-        <li>Sorry, no games available</li>
-    {% endfor %}
-</ul>
+            <div class="paginationMenu">
+                {% if previous_day %}
+                    <div class="sideBlock">
+                        <a href="{% url 'archive_day' previous_day.year previous_day.month previous_day.day %}">
+                            {{ previous_day|date:"d.m.Y" }}
+                            <img class="arrow"  src="/static/left-arrow.svg" alt="">
+                        </a>
+                    </div>
+                {% endif %}
+                <div class="currentDay">
+                    <p>{{ day|date:"d.m.Y" }}</p>
+                </div>  
+                {% if next_day %}
+                <div class="sideBlock">
+                    <a href="{% url 'archive_day' next_day.year next_day.month next_day.day %}">
+                        <img class="arrow arrowRight" src="/static/left-arrow.svg" alt="">
+                        {{ next_day|date:"d.m.Y" }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="list"> 
+                {% for game in object_list %}
+                    <div class="listElement">
 
+                        {%if game.is_win %}
+                            <div class="team winner">
+                        {% else %}
+                        <div class="team">
+                        {% endif %}
+                            <img src="{% static game.team_home.logo %}" alt="logo" width="50">
+                            <p>{{ game.team_home }}</p>
+                        </div>
+
+                        <div class="gameInfo">
+                            <p class="score">{{ game.score_home }}  -  {{ game.score_visitor }}</p>
+                        </div>
+                        
+                        {%if game.is_win %}
+                            <div class="team">
+                        {% else %}
+                            <div class="team winner">
+                        {% endif %}
+                            <p>{{ game.team_visitor }}</p>
+                            <img src="{% static game.team_visitor.logo %}" alt="logo" width="50">
+                        </div>  
+                        <div class="date">
+                            <p>{{ game.game_start_utc|date:"d.m.Y" }} </p>
+                            <p>{{ game.game_start_utc|time:"H:i" }} </p>
+                        </div>
+                        
+
+                       
+                    </div>
+                    
+                {% empty %}
+                    <div>Sorry, no games available</div>
+                {% endfor %}
+            </div>
+
+
+            
+           
+        </div>
+    </div>
 {%  endblock %}

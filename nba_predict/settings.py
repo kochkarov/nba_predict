@@ -30,18 +30,19 @@ ALLOWED_HOSTS = ['192.168.0.9']
 # Application definition
 
 INSTALLED_APPS = [
+    'django.contrib.postgres',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'django_extensions',
 
     'game.apps.GameConfig',
     'team.apps.TeamConfig',
-    'users'
+    'member',
+    'prediction'
 ]
 
 MIDDLEWARE = [

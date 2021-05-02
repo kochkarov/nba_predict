@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import re
+from tqdm.notebook import tqdm
+
 from game.models import Game
 from team.models import Team
 
@@ -12,21 +14,21 @@ class DataNba:
     data = None
 
     def __init__(self):
-        if DataNba.data is None:
-            self.init_data()
+        self.init_data()
         return
 
     @classmethod
     def init_data(cls):
-        cls.create_teams()
-        cls.create_games()
-        cls.add_mirrored_data()
-        cls.add_total_columns()
-        cls.add_onehot_columns(['team', 'opponent'])
-        cls.add_last_result_columns('team', 'is_win', 20)
-        cls.add_last_result_columns('opponent', 'is_win', 20)
-        cls.add_last_result_columns('team', 'diff_team', 20)
-        cls.add_last_result_columns('opponent', 'diff_team', 20)
+        if cls.data is None:
+            cls.create_teams()
+            cls.create_games()
+            cls.add_mirrored_data()
+            # cls.add_total_columns()
+            cls.add_last_result_columns('team', 'diff_team', 20)
+            cls.add_last_result_columns('opponent', 'diff_team', 20)
+            cls.add_last_result_columns('team', 'is_win', 20)
+            cls.add_last_result_columns('opponent', 'is_win', 20)
+            # cls.add_onehot_columns(['team', 'opponent'])
 
     @classmethod
     def create_teams(cls):
@@ -38,26 +40,25 @@ class DataNba:
 
     @classmethod
     def create_games(cls):
-        print('Create DataFrame...')
         cls.game_objects = Game.objects.all()
 
         columns = ['game_id', 'season', 'date', 'added', 'human', 'team', 'opponent', 'score_team', 'score_opp']
         cls.data = pd.DataFrame([[game.game_id, game.season, pd.Timestamp(game.game_date), pd.Timestamp(game.added),
                                   game.human_repr(), game.team_home.code, game.team_visitor.code,
-                                  game.score_home, game.score_visitor] for game in cls.game_objects],
+                                  game.score_home, game.score_visitor] for game in tqdm(cls.game_objects)],
                                 columns=columns)
 
         cls.data['is_home_game'] = 1
         cls.data['is_road_game'] = 0
-        cls.data['is_win'] = np.where(cls.data.score_team > cls.data.score_opp, 1, 0) + \
-                             np.where(cls.data.score_team == 0, np.nan, 0)
+        cls.data['is_win'] = np.where(cls.data.score_team > cls.data.score_opp, 1, 0) + np.where(
+            cls.data.score_team == 0, np.nan, 0)
         cls.data['is_lose'] = 1 - cls.data.is_win
         cls.data['is_home_win'] = cls.data.is_win
         cls.data['is_home_lose'] = 1 - cls.data.is_home_win
         cls.data['is_road_win'] = 0
         cls.data['is_road_lose'] = 0
-        cls.data['diff_team'] = cls.data.score_team - cls.data.score_opp
-        cls.data['diff_opp'] = cls.data.score_opp - cls.data.score_team
+        cls.data['diff_team'] = np.where(cls.data.score_team == 0, np.nan, cls.data.score_team - cls.data.score_opp)
+        cls.data['diff_opp'] = -cls.data['diff_team']
         return
 
     @classmethod
@@ -105,7 +106,7 @@ class DataNba:
     @classmethod
     def add_total_columns(cls):
         columns = cls.get_columns(['is_'])
-        for season in cls.data.season.unique():
+        for season in tqdm(cls.data.season.unique()):
             for team in cls.teams.index:
                 idx = (cls.data.season == season) & (cls.data.team == team)
                 for column in columns:
@@ -122,7 +123,8 @@ class DataNba:
     @classmethod
     def add_last_result_columns(cls, filter_column, data_column, count=20):
         hg = cls.data[cls.data.is_home_game == 1]
-        result = pd.DataFrame([cls.get_last_result(row, filter_column, data_column, count) for _, row in hg.iterrows()],
+        result = pd.DataFrame([cls.get_last_result(row, filter_column, data_column, count) for _, row in
+                               tqdm(hg.iterrows())],
                               index=hg.index, columns=cls.generate_names(filter_column, data_column, count))
         cls.data = cls.data.join(result)
         return

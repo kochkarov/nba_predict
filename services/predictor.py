@@ -35,8 +35,12 @@ class Predictor(DataNba):
         return x, y
 
     @classmethod
-    def score(cls, predict, true):
-        return np.sum(predict == true) / len(true)
+    def score(cls, predict, true, prn=0):
+        eq = np.sum(predict == true)
+        total = len(true)
+        if prn:
+            print(f'{eq*100/total:.2f} %    {eq} of {total}')
+        return eq / total
 
 
 # class SimplePredictor(Predictor):
@@ -87,7 +91,7 @@ class XgbPredictor(Predictor):
         this_score = self.score(self.y_predict, self.y_true)
         return (this_score - base_score) / (1 - base_score)
 
-    def check_prediction(self):
+    def rate_prediction(self):
         self.fit()
         self.X_predict, self.y_true = self.get_data([2020])
         self.y_predict = self.predict(xgb.DMatrix(self.X_predict))
@@ -107,4 +111,7 @@ class XgbPredictor(Predictor):
         self.X_predict = df[self.get_columns(self.param['mask'])].dropna()
         self.y_true = df.is_win.loc[self.X_predict.index]
         self.y_predict = self.predict(xgb.DMatrix(self.X_predict)).astype(int)
-        return self.data.loc[self.X_predict.index][['date', 'human', 'is_win']].assign(predict=self.y_predict)
+        self.score(self.y_predict, self.y_true, 1)
+        res = self.data.loc[self.X_predict.index][['date', 'human', 'is_win']].assign(predict=self.y_predict)
+        res.is_win = res.is_win.astype(int)
+        return res

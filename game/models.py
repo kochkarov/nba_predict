@@ -22,7 +22,7 @@ class TeamScoreSchema(BaseModel):
 
 class GameSchema(BaseModel):
     """Класс Pydantic для парсинга результатов игр"""
-    game_id: int = Field(None, alias='gameId')
+    game_id: str = Field(None, alias='gameId')
     stage_id: int = Field(None, alias='seasonStageId')
     season: int = Field(None)
     game_start_utc: Union[datetime.datetime, str] = Field(None, alias='startTimeUTC')
@@ -61,7 +61,7 @@ class GameSchema(BaseModel):
 
 class Game(models.Model):
     """Класс Django с таблицей результатов игр"""
-    game_id = models.IntegerField('Game ID')
+    game_id = models.CharField('Game ID', max_length=15, default='')
     stage_id = models.IntegerField('Stage ID', default=2)
     season = models.IntegerField('Season', default=2020)
     game_date = models.DateField('Game date', default=None)
@@ -79,6 +79,9 @@ class Game(models.Model):
 
     def __str__(self):
         return f'{self.game_date} {self.team_home} {self.score_home}:{self.score_visitor} {self.team_visitor}'
+
+    def is_win(self):
+        return self.score_home > self.score_visitor
 
     def human_repr(self):
         return f'{self.team_home.name}  {self.score_home}:{self.score_visitor} {self.team_visitor.name}'

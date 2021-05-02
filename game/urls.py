@@ -13,5 +13,4 @@ urlpatterns = [
     path('',
          TodayArchiveView.as_view(model=Game, month_format='%m', date_field='game_date', allow_future=True),
          name='today_archive_day'),
-
 ]
