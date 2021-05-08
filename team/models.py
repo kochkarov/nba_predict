@@ -6,7 +6,7 @@ import numpy as np
 class BaseTeamModel(models.Model):
     number = 30
     code = models.IntegerField('Code', default=-1)
-    name = models.CharField('Name', max_length=42, unique=True, default='')
+    name = models.CharField('Name', max_length=42, primary_key=True)
 
     def one_hot(self) -> list:
         return np.eye(self.number)[self.code].astype(int)

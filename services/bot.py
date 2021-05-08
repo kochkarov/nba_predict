@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-class Predictor(DataNba):
+class Bot(DataNba):
     def __init__(self, param: dict):
         super().__init__()
         self.param = param
@@ -68,7 +68,7 @@ class Predictor(DataNba):
 #         return self.model.score(self.X_predict, self.get_y())
 
 
-class XgbPredictor(Predictor):
+class XgbBot(Bot):
     def __init__(self, param: dict):
         super().__init__(param)
         self.param.setdefault('seasons', list(range(2015, 2020)))

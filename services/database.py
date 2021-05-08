@@ -2,9 +2,12 @@ import pandas as pd
 import numpy as np
 import re
 from tqdm.notebook import tqdm
+from multiprocessing import Pool
 
 from game.models import Game
 from team.models import Team
+
+from django.core.paginator import Paginator
 
 
 class DataNba:
@@ -18,17 +21,46 @@ class DataNba:
         return
 
     @classmethod
-    def init_data(cls):
-        if cls.data is None:
+    def init_data(cls, forced_call=False):
+        args = [
+            {'filter_column': 'team', 'data_column': 'diff_team', 'count': 20},
+            {'filter_column': 'opponent', 'data_column': 'diff_team', 'count': 20},
+            {'filter_column': 'team', 'data_column': 'is_win', 'count': 20},
+            {'filter_column': 'opponent', 'data_column': 'is_win', 'count': 20},
+        ]
+
+        # if (cls.data is None) or forced_call:
+        if forced_call:
             cls.create_teams()
             cls.create_games()
             cls.add_mirrored_data()
             # cls.add_total_columns()
-            cls.add_last_result_columns('team', 'diff_team', 20)
-            cls.add_last_result_columns('opponent', 'diff_team', 20)
-            cls.add_last_result_columns('team', 'is_win', 20)
-            cls.add_last_result_columns('opponent', 'is_win', 20)
+            for arg in args:
+                cls.add_last_result_columns(**arg)
             # cls.add_onehot_columns(['team', 'opponent'])
+
+    @classmethod
+    def init_data_mp(cls, forced_call=False):
+        kwds = [
+            {'filter_column': 'team', 'data_column': 'diff_team', 'count': 20},
+            {'filter_column': 'opponent', 'data_column': 'diff_team', 'count': 20},
+            {'filter_column': 'team', 'data_column': 'is_win', 'count': 20},
+            {'filter_column': 'opponent', 'data_column': 'is_win', 'count': 20},
+        ]
+
+        starmap_args = [tuple(values for values in row.values()) for row in kwds]
+
+        # if (cls.data is None) or forced_call:
+        if forced_call:
+            cls.create_teams()
+            cls.create_games()
+            cls.add_mirrored_data()
+            # cls.add_total_columns()
+            with Pool() as pool:
+                list_df = pool.starmap(cls.get_last_result_columns, starmap_args)
+            cls.data = cls.data.join(list_df)
+            # cls.add_onehot_columns(['team', 'opponent'])
+        return
 
     @classmethod
     def create_teams(cls):
@@ -128,6 +160,13 @@ class DataNba:
                               index=hg.index, columns=cls.generate_names(filter_column, data_column, count))
         cls.data = cls.data.join(result)
         return
+
+    @classmethod
+    def get_last_result_columns(cls, filter_column, data_column, count):
+        hg = cls.data[cls.data.is_home_game == 1]
+        return pd.DataFrame([cls.get_last_result(row, filter_column, data_column, count) for _, row in
+                            hg.iterrows()], index=hg.index,
+                            columns=cls.generate_names(filter_column, data_column, count))
 
     @staticmethod
     def generate_names(filter_column, data_column, count):

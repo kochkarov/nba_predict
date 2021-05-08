@@ -1,6 +1,6 @@
 import requests
 from team.models import Team, TeamSchema, Division, DivisionSchema, Conference
-from game.models import GameSchema
+from game.validate import GameSchema
 import pydantic
 from jinja2 import Template
 
