@@ -30,7 +30,7 @@ class Bot(DataNba):
             df = self.data[self.data.season.isin(seasons) & (self.data.is_home_game == 1) &
                            self.data.is_win.notna()]
 
-        x = df[self.get_columns(self.param['mask'])].dropna()
+        x = df[self.get_column_names(self.param['mask'])].dropna()
         y = df.is_win.loc[x.index]
         return x, y
 
@@ -108,7 +108,7 @@ class XgbBot(Bot):
         df = self.data[(self.data.date == pd.Timestamp(date)) & (self.data.is_home_game == 1) &
                        self.data.is_win.notna()]
 
-        self.X_predict = df[self.get_columns(self.param['mask'])].dropna()
+        self.X_predict = df[self.get_column_names(self.param['mask'])].dropna()
         self.y_true = df.is_win.loc[self.X_predict.index]
         self.y_predict = self.predict(xgb.DMatrix(self.X_predict)).astype(int)
         self.score(self.y_predict, self.y_true, 1)

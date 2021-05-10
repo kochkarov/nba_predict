@@ -2,12 +2,11 @@ import pandas as pd
 import numpy as np
 import re
 from tqdm.notebook import tqdm
-from multiprocessing import Pool
+import multiprocessing as mp
+from django import db
 
 from game.models import Game
 from team.models import Team
-
-from django.core.paginator import Paginator
 
 
 class DataNba:
@@ -22,44 +21,15 @@ class DataNba:
 
     @classmethod
     def init_data(cls, forced_call=False):
-        args = [
-            {'filter_column': 'team', 'data_column': 'diff_team', 'count': 20},
-            {'filter_column': 'opponent', 'data_column': 'diff_team', 'count': 20},
-            {'filter_column': 'team', 'data_column': 'is_win', 'count': 20},
-            {'filter_column': 'opponent', 'data_column': 'is_win', 'count': 20},
-        ]
 
-        # if (cls.data is None) or forced_call:
-        if forced_call:
+        if (cls.data is None) or forced_call:
+            print('Creating data... ')
             cls.create_teams()
             cls.create_games()
             cls.add_mirrored_data()
-            # cls.add_total_columns()
-            for arg in args:
-                cls.add_last_result_columns(**arg)
-            # cls.add_onehot_columns(['team', 'opponent'])
-
-    @classmethod
-    def init_data_mp(cls, forced_call=False):
-        kwds = [
-            {'filter_column': 'team', 'data_column': 'diff_team', 'count': 20},
-            {'filter_column': 'opponent', 'data_column': 'diff_team', 'count': 20},
-            {'filter_column': 'team', 'data_column': 'is_win', 'count': 20},
-            {'filter_column': 'opponent', 'data_column': 'is_win', 'count': 20},
-        ]
-
-        starmap_args = [tuple(values for values in row.values()) for row in kwds]
-
-        # if (cls.data is None) or forced_call:
-        if forced_call:
-            cls.create_teams()
-            cls.create_games()
-            cls.add_mirrored_data()
-            # cls.add_total_columns()
-            with Pool() as pool:
-                list_df = pool.starmap(cls.get_last_result_columns, starmap_args)
-            cls.data = cls.data.join(list_df)
-            # cls.add_onehot_columns(['team', 'opponent'])
+            cls.add_total_columns()
+            cls.add_last_result_columns()
+            cls.add_onehot_columns(['team', 'opponent'])
         return
 
     @classmethod
@@ -71,26 +41,39 @@ class DataNba:
         return
 
     @classmethod
+    def games_handler(cls, games):
+        columns = ['game_id', 'season', 'date', 'added', 'human', 'team', 'opponent', 'score_team', 'score_opp']
+        df = pd.DataFrame([[game.game_id, game.season, pd.Timestamp(game.game_date), pd.Timestamp(game.added),
+                          game.human_repr(), game.team_home.code, game.team_visitor.code,
+                          game.score_home, game.score_visitor] for game in games], columns=columns)
+
+        df['is_home_game'] = 1
+        df['is_road_game'] = 0
+        df['is_win'] = np.where(df.score_team > df.score_opp, 1, 0) + np.where(df.score_team == 0, np.nan, 0)
+        df['is_lose'] = 1 - df.is_win
+        df['is_home_win'] = df.is_win
+        df['is_home_lose'] = 1 - df.is_home_win
+        df['is_road_win'] = 0
+        df['is_road_lose'] = 0
+        df['diff_team'] = np.where(df.score_team == 0, np.nan, df.score_team - df.score_opp)
+        df['diff_opp'] = -df['diff_team']
+        return df
+
+    @classmethod
     def create_games(cls):
+
+        def next_page(objects):
+            pages = mp.cpu_count()
+            page_size = int(np.ceil(len(objects) / float(pages)))
+            for page in range(pages):
+                yield objects[page*page_size:(page+1)*page_size]
+
         cls.game_objects = Game.objects.all()
 
-        columns = ['game_id', 'season', 'date', 'added', 'human', 'team', 'opponent', 'score_team', 'score_opp']
-        cls.data = pd.DataFrame([[game.game_id, game.season, pd.Timestamp(game.game_date), pd.Timestamp(game.added),
-                                  game.human_repr(), game.team_home.code, game.team_visitor.code,
-                                  game.score_home, game.score_visitor] for game in tqdm(cls.game_objects)],
-                                columns=columns)
-
-        cls.data['is_home_game'] = 1
-        cls.data['is_road_game'] = 0
-        cls.data['is_win'] = np.where(cls.data.score_team > cls.data.score_opp, 1, 0) + np.where(
-            cls.data.score_team == 0, np.nan, 0)
-        cls.data['is_lose'] = 1 - cls.data.is_win
-        cls.data['is_home_win'] = cls.data.is_win
-        cls.data['is_home_lose'] = 1 - cls.data.is_home_win
-        cls.data['is_road_win'] = 0
-        cls.data['is_road_lose'] = 0
-        cls.data['diff_team'] = np.where(cls.data.score_team == 0, np.nan, cls.data.score_team - cls.data.score_opp)
-        cls.data['diff_opp'] = -cls.data['diff_team']
+        db.connections.close_all()
+        with mp.Pool() as pool:
+            list_df = pool.map(cls.games_handler, next_page(cls.game_objects))
+        cls.data = pd.concat(list_df, ignore_index=True)
         return
 
     @classmethod
@@ -120,7 +103,7 @@ class DataNba:
         return
 
     @classmethod
-    def get_columns(cls, column_mask: list):
+    def get_column_names(cls, column_mask: list):
         columns = []
         for mask in column_mask:
             if mask in cls.data.columns:
@@ -136,14 +119,21 @@ class DataNba:
         return columns
 
     @classmethod
+    def _total_columns_handler(cls, season):
+        df = pd.DataFrame(index=cls.data[cls.data.season == season].index)
+        columns = cls.get_column_names(['is_'])
+        for team in cls.teams.index:
+            idx = (cls.data.season == season) & (cls.data.team == team)
+            for column in columns:
+                df.loc[idx, column.replace('is_', 'total_')] = cls.data.loc[idx, column].cumsum().shift(fill_value=0)
+        return df
+
+    @classmethod
     def add_total_columns(cls):
-        columns = cls.get_columns(['is_'])
-        for season in tqdm(cls.data.season.unique()):
-            for team in cls.teams.index:
-                idx = (cls.data.season == season) & (cls.data.team == team)
-                for column in columns:
-                    cls.data.loc[idx, column.replace('is_', 'total_')] = \
-                        cls.data.loc[idx, column].cumsum().shift(fill_value=0)
+        with mp.Pool() as pool:
+            list_df = pool.map(cls._total_columns_handler, cls.data.season.unique())
+
+        cls.data = cls.data.join(pd.concat(list_df))
         return
 
     @classmethod
@@ -153,12 +143,19 @@ class DataNba:
                                      (cls.data.season == row.season)].values[:-count - 1:-1]
 
     @classmethod
-    def add_last_result_columns(cls, filter_column, data_column, count=20):
-        hg = cls.data[cls.data.is_home_game == 1]
-        result = pd.DataFrame([cls.get_last_result(row, filter_column, data_column, count) for _, row in
-                               tqdm(hg.iterrows())],
-                              index=hg.index, columns=cls.generate_names(filter_column, data_column, count))
-        cls.data = cls.data.join(result)
+    def add_last_result_columns(cls):
+        kwds = [
+            {'filter_column': 'team', 'data_column': 'diff_team', 'count': 20},
+            {'filter_column': 'opponent', 'data_column': 'diff_team', 'count': 20},
+            {'filter_column': 'team', 'data_column': 'is_win', 'count': 20},
+            {'filter_column': 'opponent', 'data_column': 'is_win', 'count': 20},
+        ]
+
+        starmap_args = [tuple(values for values in row.values()) for row in kwds]
+
+        with mp.Pool() as pool:
+            list_df = pool.starmap(cls.get_last_result_columns, starmap_args)
+        cls.data = cls.data.join(list_df)
         return
 
     @classmethod
