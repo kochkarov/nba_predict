@@ -9,6 +9,7 @@ class Bot(DataNba):
     def __init__(self, param: dict):
         super().__init__()
         self.param = param
+        self.df_predict = None
         self.X_train = None
         self.y_train = None
         self.X_predict = None
@@ -21,6 +22,10 @@ class Bot(DataNba):
 
     def predict(self, x):
         return self.model.predict(x)
+
+    def make_predict(self, date: str):
+        self.df_predict = self.data[(self.data.date == pd.Timestamp(date)) & (self.data.is_home_game == 1)]
+        return
 
     def get_data(self, seasons: list, real_predict=0):
         if real_predict:
@@ -67,6 +72,9 @@ class Bot(DataNba):
 #         self.predict(self.get_x())
 #         return self.model.score(self.X_predict, self.get_y())
 
+class BaseBot(Bot):
+    pass
+
 
 class XgbBot(Bot):
     def __init__(self, param: dict):
@@ -97,19 +105,18 @@ class XgbBot(Bot):
         self.y_predict = self.predict(xgb.DMatrix(self.X_predict))
         return self.determination()
 
-    def make_predict(self):
-        self.fit()
-        self.X_predict, self.y_true = self.get_data([2020], True)
-        self.y_predict = self.predict(xgb.DMatrix(self.X_predict))
-        return self.data.loc[self.X_predict.index][['date', 'human']].assign(predict=self.y_predict.astype(int))
+    # def make_predict(self):
+    #     self.fit()
+    #     self.X_predict, self.y_true = self.get_data([2020], True)
+    #     self.y_predict = self.predict(xgb.DMatrix(self.X_predict))
+    #     return self.data.loc[self.X_predict.index][['date', 'human']].assign(predict=self.y_predict.astype(int))
 
-    def check_date_predict(self, date: str):
+    def make_predict(self, date: str):
+        super().make_predict(date)
         self.fit()
-        df = self.data[(self.data.date == pd.Timestamp(date)) & (self.data.is_home_game == 1) &
-                       self.data.is_win.notna()]
 
-        self.X_predict = df[self.get_column_names(self.param['mask'])].dropna()
-        self.y_true = df.is_win.loc[self.X_predict.index]
+        self.X_predict = self.df_predict[self.get_column_names(self.param['mask'])].dropna()
+        self.y_true = self.df_predict.is_win.loc[self.X_predict.index]
         self.y_predict = self.predict(xgb.DMatrix(self.X_predict)).astype(int)
         self.score(self.y_predict, self.y_true, 1)
         res = self.data.loc[self.X_predict.index][['date', 'human', 'is_win']].assign(predict=self.y_predict)
