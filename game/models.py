@@ -26,7 +26,12 @@ class Game(models.Model):
         return f'{self.game_date} {self.team_home} {self.score_home}:{self.score_visitor} {self.team_visitor}'
 
     def is_win(self):
-        return self.score_home > self.score_visitor
+        if self.score_home > self.score_visitor:
+            return 1
+        elif self.score_home < self.score_visitor:
+            return 0
+        else:
+            return None
 
     def human_repr(self):
         return f'{self.team_home.name}  {self.score_home}:{self.score_visitor} {self.team_visitor.name}'

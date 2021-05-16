@@ -1,16 +1,40 @@
-# This is a sample Python script.
+#!/usr/bin/env python
+import django
+django.setup()
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from member.models import Member
+from services.api import ApiNba
+from services.database import DataNba
+from team.models import Team, Conference, Division
+from game.models import Game
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def delete_games():
+    Game.objects.all().delete()
+    Team.objects.all().delete()
+    Division.objects.all().delete()
+    Conference.objects.all().delete()
 
 
-# Press the green button in the gutter to run the script.
+def create_teams():
+    apinba = ApiNba()
+    apinba.create_teams()
+
+
+def create_games():
+    apinba = ApiNba()
+    for year in range(2015, 2021):
+        apinba.update_data(year)
+
+
+def create_bots():
+    param = {'class_name': 'XgbBot', 'seasons': [2015, 2016, 2017, 2018, 2019], 'count': 20, 'mask': ['_diff_'],
+             'num_boost_round': 150}
+    Member.objects.update_or_create(name='Smart', is_bot=1, defaults={'param': param})
+
+    param = {'class_name': 'BaseBot'}
+    Member.objects.update_or_create(name='Dumb', is_bot=1, defaults={'param': param})
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    create_bots()

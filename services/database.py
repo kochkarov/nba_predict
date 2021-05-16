@@ -15,8 +15,8 @@ class DataNba:
     team_objects = None
     data = None
 
-    def __init__(self):
-        self.init_data()
+    def __init__(self, forced_call=False):
+        self.init_data(forced_call=forced_call)
         return
 
     @classmethod
@@ -30,6 +30,7 @@ class DataNba:
             cls.add_total_columns()
             cls.add_last_result_columns()
             cls.add_onehot_columns(['team', 'opponent'])
+            cls.data.set_index('game_id', drop=False, append=True, inplace=True)
         return
 
     @classmethod

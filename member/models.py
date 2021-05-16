@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from services.bot import XgbBot, Bot
+from services.bot import XgbBot, BaseBot, Bot
 import json
 
 
@@ -17,25 +17,24 @@ class Human(User):
 
 
 class Member(models.Model):
+    id = models.BigAutoField(primary_key=True)
     name = models.CharField('User name', max_length=64, default='')
     is_bot = models.IntegerField(verbose_name='Bot signature', default=1)
     human = models.ForeignKey('Human', related_name='+', on_delete=models.CASCADE,
                               verbose_name='Human user', default=None, null=True)
-    param_json = models.TextField(default=None, null=True)
+    param = models.JSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.bot = self.restore_bot()
+        self.bot = None
 
     def __str__(self):
         return f'{self.name}'
 
     def restore_bot(self):
         if self.is_bot:
-            param = json.loads(self.param_json)
-            cls = globals()[param['class_name']]
-            return cls(param)
-        return None
+            cls = globals()[self.param['class_name']]
+            self.bot = cls(self.param)
 
     def restore_name(self):
         pass

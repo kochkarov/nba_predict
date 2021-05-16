@@ -5,6 +5,7 @@ from member.models import Human, Member
 
 class Prediction(models.Model):
     """Класс Django с таблицей прогнозов игр"""
+    id = models.BigAutoField(primary_key=True)
     game_date = models.DateField('Game date', default=None)
     game = models.ForeignKey('game.Game', related_name='+', on_delete=models.CASCADE,
                              verbose_name='Predicted game', default=None, db_index=True)

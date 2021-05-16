@@ -37,7 +37,7 @@
                 {% for game in object_list %}
                     <div class="listElement">
 
-                        {%if game.is_win %}
+                        {%if game.is_win == 1 %}
                             <div class="team winner">
                         {% else %}
                         <div class="team">
@@ -50,10 +50,10 @@
                             <p class="score">{{ game.score_home }}  -  {{ game.score_visitor }}</p>
                         </div>
                         
-                        {%if game.is_win %}
-                            <div class="team">
-                        {% else %}
+                        {%if game.is_win == 0 %}
                             <div class="team winner">
+                        {% else %}
+                            <div class="team">
                         {% endif %}
                             <p>{{ game.team_visitor }}</p>
                             <img src="{% static game.team_visitor.logo %}" alt="logo" width="50">

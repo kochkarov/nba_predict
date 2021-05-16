@@ -48,10 +48,7 @@ class GameSchema(BaseModel):
         game_dict['team_name_home'] = game_dict['team_home'].name
         game_dict['team_name_visitor'] = game_dict['team_visitor'].name
 
-        game = Game.objects.filter(game_id=game_dict['game_id'])
-        if game.exists():
-            game.update(**game_dict)
-        else:
-            game = Game.objects.create(**game_dict)
-            print(f'{game}')
+        obj, created = Game.objects.update_or_create(game_id=game_dict['game_id'], defaults=game_dict)
+        if created:
+            print(f'{obj}')
         return values
