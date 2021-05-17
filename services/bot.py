@@ -7,6 +7,9 @@ class Bot(DataNba):
     def __init__(self, param: dict):
         super().__init__()
         self.param = param
+        self.param.setdefault('num_boost_round', 100)
+        self.param.setdefault('seasons', list(range(2015, 2020)))
+        self.param.setdefault('mask', [''])
         self.columns = self.get_column_names(self.param['mask'])
         self.model = None
         self.y_predict = None
@@ -43,33 +46,9 @@ class Bot(DataNba):
         return eq / total
 
 
-# class SimplePredictor(Predictor):
-#     def __init__(self, seasons: list, mask: str):
-#         super().__init__()
-#         self.seasons = seasons
-#         self.mask = mask
-#         self.name = f'Team OneHot {self.seasons}'
-#
-#     def fit(self):
-#         self.get_data()
-#         self.model = LogisticRegression(random_state=13).fit(self.X_train, self.y_train)
-#
-#     def get_x(self):
-#         self.X_predict = self.data[(self.data.season == 2020) &
-#                                    (self.data.is_home_game == 1)][self.get_columns(self.mask)]
-#         return self.X_predict
-#
-#     def get_y(self):
-#         return self.data.is_win.loc[self.X_predict.index]
-#
-#     def score(self):
-#         self.fit()
-#         self.predict(self.get_x())
-#         return self.model.score(self.X_predict, self.get_y())
-
 class BaseBot(Bot):
     def __init__(self, param: dict):
-        pass
+        super().__init__(param)
 
     def make_predict(self, game_list: list[str]):
         return [{'game_id': game_id, 'predict': 1} for game_id in game_list]
@@ -78,11 +57,9 @@ class BaseBot(Bot):
 class XgbBot(Bot):
     def __init__(self, param: dict):
         super().__init__(param)
-        self.param.setdefault('seasons', list(range(2015, 2020)))
         self.param.setdefault('count', 20)
         self.param.setdefault('mask', ['_diff_', '_is_win-'])
         self.param.setdefault('objective', 'binary:hinge')
-        self.param.setdefault('num_boost_round', 100)
         self.param.setdefault('verbosity', 0)
         self.name = f'XGB, use last {self.param["count"]} results'
 

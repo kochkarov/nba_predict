@@ -8,8 +8,8 @@ class Human(User):
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
     class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
+        verbose_name = 'Человек'
+        verbose_name_plural = 'Люди'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -28,6 +28,8 @@ class Member(models.Model):
         self.bot = None
 
     def __str__(self):
+        if self.is_bot:
+            return f"Bot {self.name} {self.param['class_name']}"
         return f'{self.name}'
 
     def restore_bot(self):
@@ -36,5 +38,5 @@ class Member(models.Model):
             self.bot = cls(self.param)
 
     class Meta:
-        verbose_name = 'Участник'
-        verbose_name_plural = 'Участники'
+        verbose_name = 'Бот'
+        verbose_name_plural = 'Боты'
