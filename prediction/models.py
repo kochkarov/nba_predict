@@ -13,6 +13,10 @@ class Prediction(models.Model):
                                verbose_name='Member', default=None, db_index=True)
     predict = models.IntegerField('Predict', default=None)
 
+    def __str__(self):
+        return f'User: {self.member}, predict {self.predict}    {self.game}'
+
     class Meta:
         verbose_name = 'Прогноз'
         verbose_name_plural = 'Прогнозы'
+        ordering = ['-game_date']

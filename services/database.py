@@ -15,8 +15,7 @@ class DataNba:
     team_objects = None
     data = None
 
-    def __init__(self, forced_call=False):
-        self.init_data(forced_call=forced_call)
+    def __init__(self):
         return
 
     @classmethod

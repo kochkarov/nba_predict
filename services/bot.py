@@ -1,8 +1,6 @@
 from services.database import DataNba
-# from sklearn.linear_model import LogisticRegression
 import xgboost as xgb
 import numpy as np
-import pandas as pd
 
 
 class Bot(DataNba):
@@ -33,7 +31,7 @@ class Bot(DataNba):
 
     def get_data(self, seasons: list[int]):
         x = self.data[self.data.season.isin(seasons) & (self.data.is_home_game == 1)][self.columns].dropna()
-        y = x.is_win.loc[x.index]
+        y = self.data.is_win.loc[x.index]
         return x, y
 
     @classmethod
@@ -70,7 +68,11 @@ class Bot(DataNba):
 #         return self.model.score(self.X_predict, self.get_y())
 
 class BaseBot(Bot):
-    pass
+    def __init__(self, param: dict):
+        pass
+
+    def make_predict(self, game_list: list[str]):
+        return [{'game_id': game_id, 'predict': 1} for game_id in game_list]
 
 
 class XgbBot(Bot):
@@ -85,6 +87,7 @@ class XgbBot(Bot):
         self.name = f'XGB, use last {self.param["count"]} results'
 
     def fit(self):
+        self.init_data()
         x_train, y_train = self.get_data(self.param['seasons'])
         self.model = xgb.train(self.param, xgb.DMatrix(x_train, label=y_train),
                                num_boost_round=self.param['num_boost_round'])
@@ -111,9 +114,8 @@ class XgbBot(Bot):
         idx = self.id_to_index(game_list)
         self.fit()
 
-        x_predict = self.data[idx][self.get_column_names(self.param['mask'])].dropna()
-        self.y_predict = self.predict(xgb.DMatrix(x_predict)).astype(int)
-        # self.score(self.y_predict, self.y_true, 1)
-        # res = self.data.loc[self.X_predict.index][['date', 'human', 'is_win']].assign(predict=self.y_predict)
-        # res.is_win = res.is_win.astype(int)
-        return pd.DataFrame(self.y_predict, index=self.X_predict.index, columns=['y_predict'])
+        x = self.data.loc[idx][self.get_column_names(self.param['mask'])].dropna()
+        y = self.predict(xgb.DMatrix(x)).astype(int)
+
+        return [{'game_id': game_id, 'predict': predict}
+                for game_id, predict in zip(x.index.get_level_values('game_id'), y)]

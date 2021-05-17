@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from services.bot import XgbBot, BaseBot, Bot
-import json
 
 
 class Human(User):
@@ -35,9 +34,6 @@ class Member(models.Model):
         if self.is_bot:
             cls = globals()[self.param['class_name']]
             self.bot = cls(self.param)
-
-    def restore_name(self):
-        pass
 
     class Meta:
         verbose_name = 'Участник'

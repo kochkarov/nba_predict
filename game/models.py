@@ -6,7 +6,7 @@ from team.models import Team
 
 class Game(models.Model):
     """Класс Django с таблицей результатов игр"""
-    game_id = models.CharField('Game ID', max_length=15, primary_key=True)
+    game_id = models.CharField('Game ID', max_length=15, primary_key=True, db_index=True)
     stage_id = models.IntegerField('Stage ID', default=2)
     season = models.IntegerField('Season', default=2020)
     game_date = models.DateField('Game date', default=None)
@@ -39,4 +39,4 @@ class Game(models.Model):
     class Meta:
         verbose_name = 'Игра'
         verbose_name_plural = 'Игры'
-        ordering = ['game_id']
+        ordering = ['game_start_utc']
