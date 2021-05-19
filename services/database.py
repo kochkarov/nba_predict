@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 import multiprocessing as mp
 from django import db
 
@@ -22,14 +22,16 @@ class DataNba:
     def init_data(cls, forced_call=False):
 
         if (cls.data is None) or forced_call:
-            print('Creating data... ')
+            progress_bar = tqdm(total=2, desc='Creating data')
             cls.create_teams()
             cls.create_games()
+            progress_bar.update(1)
             cls.add_mirrored_data()
             cls.add_total_columns()
             cls.add_last_result_columns()
             cls.add_onehot_columns(['team', 'opponent'])
             cls.data.set_index('game_id', drop=False, append=True, inplace=True)
+            progress_bar.update(1)
         return
 
     @classmethod
@@ -42,8 +44,8 @@ class DataNba:
 
     @classmethod
     def games_handler(cls, games):
-        columns = ['game_id', 'season', 'date', 'added', 'human', 'team', 'opponent', 'score_team', 'score_opp']
-        df = pd.DataFrame([[game.game_id, game.season, pd.Timestamp(game.game_date), pd.Timestamp(game.added),
+        columns = ['game_id', 'season', 'date', 'human', 'team', 'opponent', 'score_team', 'score_opp']
+        df = pd.DataFrame([[game.game_id, game.season, pd.Timestamp(game.game_date),
                           game.human_repr(), game.team_home.code, game.team_visitor.code,
                           game.score_home, game.score_visitor] for game in games], columns=columns)
 

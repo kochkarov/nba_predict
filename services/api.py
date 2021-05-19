@@ -1,8 +1,13 @@
 import requests
-from team.models import Team, TeamSchema, Division, DivisionSchema, Conference
-from game.validate import GameSchema
 import pydantic
 from jinja2 import Template
+from tqdm.notebook import tqdm
+from django.db.models import Avg
+
+from game.models import Game
+from prediction.models import Prediction
+from team.models import Team, TeamSchema, Division, DivisionSchema, Conference
+from game.validate import GameSchema
 
 DOMAIN = 'https://data.nba.net'
 START_PATH = '/10s/prod/v2/today.json'
@@ -56,8 +61,50 @@ class ApiNba:
         set_code(Team)
         return
 
+    def calc_rate_prediction(self, season=0):
+        season = season if season else self.current_season
+        games = Game.objects.filter(season=season)
+        for game in tqdm(games):
+            rate = Prediction.objects.filter(game=game).aggregate(rate=Avg('result'))['rate']
+            Prediction.objects.filter(game=game, is_guessed=1).update(rate=rate)
+
+    def check_prediction(self, season=0):
+        season = season if season else self.current_season
+        for predict in tqdm(Prediction.objects.filter(game__season=season, result__isnull=True,
+                                                      game__is_win__isnull=False)):
+            predict.result = 1 if predict.predict == predict.game.is_win else 0
+            predict.save()
+        return
+
     def update_data(self, season=0):
         season = season if season else self.current_season
         game_list = self.get_json(Template(SCHEDULE).render(season=season))['league']['standard']
         _ = pydantic.parse_obj_as(list[GameSchema], add_season_key(game_list, season))
+
+        self.check_data(season=season)
+        self.check_prediction(season=season)
         return
+
+    def update_boxscore(self, season=0):
+        season = season if season else self.current_season
+        games = Game.objects.filter(season=season)
+        for game in tqdm(games):
+            game.boxscore = self.get_json(Template(self.links['boxscore']).render(
+                gameId=game.game_id, gameDate=game.game_date.strftime('%Y%m%d')))
+            game.save()
+        return
+
+    def check_data(self, season=0):
+        season = season if season else self.current_season
+        games = Game.objects.filter(season=season)
+        for game in games:
+            score_home = int(game.boxscore['basicGameData']['hTeam']['score'])
+            if game.score_home != score_home:
+                game.score_home = max(game.score_home, score_home)
+                game.save()
+                print(f'Corrected Home score error {game}')
+            score_visitor = int(game.boxscore['basicGameData']['vTeam']['score'])
+            if game.score_visitor != score_visitor:
+                game.score_visitor = max(game.score_visitor, score_visitor)
+                game.save()
+                print(f'Corrected Visitor score error {game}')

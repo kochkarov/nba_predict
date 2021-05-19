@@ -9,7 +9,7 @@ class Bot(DataNba):
         self.param = param
         self.param.setdefault('num_boost_round', 100)
         self.param.setdefault('seasons', list(range(2015, 2020)))
-        self.param.setdefault('mask', [''])
+        self.param.setdefault('mask', ['_oh_'])
         self.columns = self.get_column_names(self.param['mask'])
         self.model = None
         self.y_predict = None
