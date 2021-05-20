@@ -19,7 +19,7 @@ class Member(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField('User name', max_length=64, default='')
     is_bot = models.IntegerField(verbose_name='Bot signature', default=1)
-    human = models.ForeignKey('Human', related_name='+', on_delete=models.CASCADE,
+    human = models.ForeignKey('Human', related_name='+', on_delete=models.PROTECT,
                               verbose_name='Human user', default=None, null=True)
     param = models.JSONField(null=True)
 

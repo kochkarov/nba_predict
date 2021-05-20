@@ -11,9 +11,9 @@ class Game(models.Model):
     game_date = models.DateField('Game date', default=None)
     game_time = models.TimeField('Game time', default=None)
     game_start_utc = models.DateTimeField('Game start UTC', default=None)
-    team_home = models.ForeignKey('team.Team', related_name='+', on_delete=models.CASCADE,
+    team_home = models.ForeignKey('team.Team', related_name='+', on_delete=models.PROTECT,
                                   verbose_name='Home team', default=None)
-    team_visitor = models.ForeignKey('team.Team', related_name='+', on_delete=models.CASCADE,
+    team_visitor = models.ForeignKey('team.Team', related_name='+', on_delete=models.PROTECT,
                                      verbose_name='Visitor team', default=None)
     team_name_home = models.CharField('Home name', max_length=3, default='')
     score_home = models.IntegerField('Home score')

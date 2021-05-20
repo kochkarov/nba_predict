@@ -25,7 +25,7 @@ class Conference(BaseTeamModel):
 
 class Division(BaseTeamModel):
     number = 6
-    div_conf = models.ForeignKey(Conference, on_delete=models.CASCADE, verbose_name='Conference')
+    div_conf = models.ForeignKey(Conference, on_delete=models.PROTECT, verbose_name='Conference')
 
     def __str__(self):
         return self.name
@@ -53,8 +53,8 @@ class Team(BaseTeamModel):
     number = 30
     name_full = models.CharField('Full name', max_length=80, unique=True)
     team_id = models.IntegerField('Team ID', unique=True)
-    team_division = models.ForeignKey(Division, on_delete=models.CASCADE, verbose_name='Division')
-    team_conference = models.ForeignKey(Conference, on_delete=models.CASCADE, verbose_name='Conference')
+    team_division = models.ForeignKey(Division, on_delete=models.PROTECT, verbose_name='Division')
+    team_conference = models.ForeignKey(Conference, on_delete=models.PROTECT, verbose_name='Conference')
 
     def __str__(self):
         return self.name_full

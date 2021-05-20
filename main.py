@@ -2,6 +2,8 @@
 import django
 django.setup()
 
+from championship.models import Championship
+from services.moderator import Moderator
 from member.models import Member
 from services.api import ApiNba
 from services.database import DataNba
@@ -69,4 +71,7 @@ def create_bots():
 
 
 if __name__ == '__main__':
-    create_bots()
+    champ = Championship.objects.get(name='Test championship')
+    moder = Moderator(champ)
+    moder.make_prediction()
+    moder.calc_result()

@@ -4,4 +4,4 @@ from .models import Prediction
 
 @admin.register(Prediction)
 class ReadOnlyAdmin(admin.ModelAdmin):
-    readonly_fields = ('game', 'member', 'game_date')
+    readonly_fields = ('game', 'member')
