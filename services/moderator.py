@@ -5,9 +5,8 @@ from tqdm.auto import tqdm
 
 from game.models import Game
 from member.models import Member
-from prediction.models import Prediction
 from services.database import DataNba
-from championship.models import Championship, League, Score, Event
+from championship.models import Championship, League, Score, Event, Prediction
 
 
 class Moderator:
@@ -60,4 +59,3 @@ class Moderator:
             game_scores = scores.filter(prediction__game=game)
             rate = game_scores.aggregate(rate=Avg('result'))['rate']
             game_scores.filter(result=1).update(rate=rate)
-

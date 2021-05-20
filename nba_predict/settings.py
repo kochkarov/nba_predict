@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'game.apps.GameConfig',
     'team.apps.TeamConfig',
     'member',
-    'prediction',
     'championship'
 ]
 

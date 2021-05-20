@@ -47,10 +47,28 @@ class Championship(models.Model):
 
 class Score(models.Model):
     id = models.BigAutoField(primary_key=True)
-    prediction = models.ForeignKey('prediction.Prediction', related_name='+', on_delete=models.PROTECT,
+    prediction = models.ForeignKey('Prediction', related_name='+', on_delete=models.PROTECT,
                                    verbose_name='Prediction', default=None)
     result = models.IntegerField('Guessed ?', null=True, default=None)
     rate = models.FloatField('Rating', null=True, default=0)
 
     def __str__(self):
         return f'{self.prediction}  result:{self.result}  rating:{self.rate}'
+
+
+class Prediction(models.Model):
+    """Класс Django с таблицей прогнозов игр"""
+    id = models.BigAutoField(primary_key=True)
+    game = models.ForeignKey('game.Game', on_delete=models.PROTECT,
+                             verbose_name='Predicted game', default=None, db_index=True)
+    member = models.ForeignKey('member.Member', related_name='+', on_delete=models.PROTECT,
+                               verbose_name='Member', default=None, db_index=True)
+    predict = models.IntegerField('Predict', default=None)
+
+    def __str__(self):
+        return f'User: {self.member}, predict {self.predict}    {self.game}'
+
+    class Meta:
+        verbose_name = 'Прогноз'
+        verbose_name_plural = 'Прогнозы'
+        ordering = ['-game__game_date']

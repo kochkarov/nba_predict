@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Championship, League, Score, Event
+from .models import Championship, League, Score, Event, Prediction
 
 
 @admin.register(League)
@@ -21,3 +21,8 @@ class ScoreAdmin(admin.ModelAdmin):
 @admin.register(Championship)
 class ChampionshipAdmin(admin.ModelAdmin):
     readonly_fields = (['scoreboard'])
+
+
+@admin.register(Prediction)
+class PredictionAdmin(admin.ModelAdmin):
+    readonly_fields = ('game', 'member')

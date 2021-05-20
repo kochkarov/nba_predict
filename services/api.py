@@ -5,7 +5,7 @@ from tqdm.notebook import tqdm
 from django.db.models import Avg
 
 from game.models import Game
-from prediction.models import Prediction
+from championship.models import Prediction
 from team.models import Team, TeamSchema, Division, DivisionSchema, Conference
 from game.validate import GameSchema
 
