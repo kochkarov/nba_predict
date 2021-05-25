@@ -2,7 +2,7 @@
 import django
 django.setup()
 
-from championship.models import Championship
+from championship.models import Championship, Score, Prediction, Event, League
 from services.moderator import Moderator
 from member.models import Member
 from services.api import ApiNba
@@ -16,6 +16,22 @@ def delete_games():
     Team.objects.all().delete()
     Division.objects.all().delete()
     Conference.objects.all().delete()
+
+
+def create_championships():
+    leagues = League.objects.all()
+    events = Event.objects.all()
+    for event in events:
+        for league in leagues:
+            champ, _ = Championship.objects.get_or_create(name=f'{event.__str__()} {league.name}',
+                                                          league=league, event=event)
+
+
+def delete_championships():
+    Score.objects.all().delete()
+    Prediction.objects.all().delete()
+    Championship.objects.all().delete()
+    # Event.objects.all().delete()
 
 
 def create_teams():
@@ -60,18 +76,25 @@ def create_bots():
 
     param = {'class_name': 'XgbBot', 'seasons': [2017, 2018, 2019], 'count': 20,
              'mask': ['_oh_']}
-    Member.objects.update_or_create(name='On 3', is_bot=1, defaults={'param': param})
+    Member.objects.update_or_create(name='Oh 3', is_bot=1, defaults={'param': param})
 
     param = {'class_name': 'XgbBot', 'seasons': [2019], 'count': 20,
              'mask': ['_oh_']}
     Member.objects.update_or_create(name='Oh 1', is_bot=1, defaults={'param': param})
 
-    param = {'class_name': 'BaseBot', 'mask': ['_oh_']}
+    param = {'class_name': 'AlwaysWinBot', 'mask': ['_oh_']}
     Member.objects.update_or_create(name='Dumb', is_bot=1, defaults={'param': param})
+
+    param = {'class_name': 'AlwaysLoseBot', 'mask': ['_oh_']}
+    Member.objects.update_or_create(name='Dumber', is_bot=1, defaults={'param': param})
+
+    param = {'class_name': 'RandomBot', 'mask': ['_oh_']}
+    Member.objects.update_or_create(name='Crazy', is_bot=1, defaults={'param': param})
 
 
 if __name__ == '__main__':
-    champ = Championship.objects.get(name='Test championship')
-    moder = Moderator(champ)
-    moder.make_prediction()
-    moder.calc_result()
+    create_championships()
+    # champ = Championship.objects.get(name='Test championship')
+    # moder = Moderator(champ)
+    # moder.make_prediction()
+    # moder.calc_result()

@@ -5,7 +5,7 @@ from .models import Championship, League, Score, Event, Prediction
 
 @admin.register(League)
 class LeagueAdmin(admin.ModelAdmin):
-    readonly_fields = (['members'])
+    readonly_fields = ([])
 
 
 @admin.register(Event)

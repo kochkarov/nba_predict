@@ -1,6 +1,7 @@
 import enum
 
 from django.db import models
+from django.db.models import Max, Min, F
 
 from game.models import Game
 from member.models import Member
@@ -19,7 +20,8 @@ class Event(models.Model):
     games = models.ManyToManyField('game.Game', related_name='games')
 
     def __str__(self):
-        return f'{self.name} ({len(self.games.all())} games)'
+        agg = self.games.all().aggregate(date_min=Min('game_date'), date_max=Max('game_date'))
+        return f'Games from {agg["date_min"]} to {agg["date_max"]} ({len(self.games.all())} games)'
 
 
 class League(models.Model):
@@ -44,6 +46,17 @@ class Championship(models.Model):
     def __str__(self):
         return self.name
 
+    def get_predict_list(self):
+        games = self.event.games.all().order_by('game_start_utc')
+        qs = self.scoreboard.values(game=F('prediction__game_id'), member=F('prediction__member__name'),
+                                    predict=F('prediction__predict'))
+
+        win_list = [', '.join(qs.filter(predict=1, game=game.game_id).values_list('member', flat=True))
+                    for game in games]
+        lose_list = [', '.join(qs.filter(predict=0, game=game.game_id).values_list('member', flat=True))
+                     for game in games]
+        return zip(games, win_list, lose_list)
+
 
 class Score(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -53,7 +66,7 @@ class Score(models.Model):
     rate = models.FloatField('Rating', null=True, default=0)
 
     def __str__(self):
-        return f'{self.prediction}  result:{self.result}  rating:{self.rate}'
+        return f'\n{self.prediction}  result:{self.result}  rating:{self.rate}'
 
 
 class Prediction(models.Model):

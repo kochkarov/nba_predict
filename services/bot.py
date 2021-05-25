@@ -46,12 +46,20 @@ class Bot(DataNba):
         return eq / total
 
 
-class BaseBot(Bot):
-    def __init__(self, param: dict):
-        super().__init__(param)
-
+class AlwaysWinBot(Bot):
     def make_predict(self, game_list: list[str]):
         return [{'game_id': game_id, 'predict': 1} for game_id in game_list]
+
+
+class AlwaysLoseBot(Bot):
+    def make_predict(self, game_list: list[str]):
+        return [{'game_id': game_id, 'predict': 0} for game_id in game_list]
+
+
+class RandomBot(Bot):
+    def make_predict(self, game_list: list[str]):
+        predict_list = np.random.randint(2, size=len(game_list))
+        return [{'game_id': game_id, 'predict': predict} for game_id, predict in zip(game_list, predict_list)]
 
 
 class XgbBot(Bot):
@@ -79,12 +87,6 @@ class XgbBot(Bot):
         x, self.y_true = self.get_data([2020])
         self.y_predict = self.predict(xgb.DMatrix(x))
         return self.determination()
-
-    # def make_predict(self):
-    #     self.fit()
-    #     self.X_predict, self.y_true = self.get_data([2020], True)
-    #     self.y_predict = self.predict(xgb.DMatrix(self.X_predict))
-    #     return self.data.loc[self.X_predict.index][['date', 'human']].assign(predict=self.y_predict.astype(int))
 
     def make_predict(self, game_list: list[str]):
         super().make_predict(game_list)

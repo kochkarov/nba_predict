@@ -23,7 +23,7 @@ class Game(models.Model):
     stage_id = models.IntegerField('Stage ID', default=2)
 
     def __str__(self):
-        return f'{self.game_date} {self.team_home} {self.score_home}:{self.score_visitor} {self.team_visitor}'
+        return f'\n{self.game_date} {self.team_home} {self.score_home}:{self.score_visitor} {self.team_visitor}'
 
     def save(self, *args, **kwargs):
         self.is_win = self.get_is_win()

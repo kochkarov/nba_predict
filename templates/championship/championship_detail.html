@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    <title> {{ object.name }} </title>
+{% endblock %}
+
+{% block content %}
+    <h2>Championship {{ object.name }}</h2>
+
+    <p>{{ object.get_next_by_name }}</p>
+    <p>{{ object.get_previoos_by_name }}</p>
+
+    <div class="game">
+        <div class="container">
+            <table>
+                {% for row in table %}
+                    <tr>
+                        <td> {{ forloop.counter }} <td/>
+                        <td> {{ row.name }} </td>
+                        <td> {{ row.result|floatformat:2 }}% </td>
+                        <td> {{ row.rating|floatformat:3 }} </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <div class="list">
+                {% for game, predict_win, predict_lose in predicts %}
+                    {% include 'game/game_row.html' %}
+                    {{ predict_win }} ---- {{ predict_lose }}
+                {% empty %}
+                    <div>Sorry, no games available</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+            {% endif %}
+        </span>
+    </div>
+{% endblock %}
