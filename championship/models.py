@@ -46,7 +46,24 @@ class Championship(models.Model):
     def __str__(self):
         return self.name
 
+    def get_next(self):
+        return Championship.objects.all().filter(pk__gt=self.pk).order_by('pk').first()
+
+    def get_previous(self):
+        return Championship.objects.all().filter(pk__lt=self.pk).order_by('-pk').first()
+
+    def start(self):
+        agg = self.event.games.all().aggregate(start=Min('game_date'))
+        return f'{agg["start"]}'
+
+
+        return
+
     def get_predict_list(self):
+        """
+        Возвращает список из трех элементов: игра, прогнозы на победу, прогнозы на поражение
+        :return:
+        """
         games = self.event.games.all().order_by('game_start_utc')
         qs = self.scoreboard.values(game=F('prediction__game_id'), member=F('prediction__member__name'),
                                     predict=F('prediction__predict'))

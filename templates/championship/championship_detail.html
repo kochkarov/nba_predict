@@ -8,17 +8,34 @@
 {% block content %}
     <h2>Championship {{ object.name }}</h2>
 
-    <p>{{ object.get_next_by_name }}</p>
-    <p>{{ object.get_previoos_by_name }}</p>
+    <div class="pagination">
+        <span class="step-links">
+            {% if object.get_previous %}
+                <a href={% url 'championship-detail' object.get_previous.pk %}> {{ object.get_previous.start }} </a>
+            {% endif %}
+            {% if object.get_next %}
+                <a href={% url 'championship-detail' object.get_next.pk %}> {{ object.get_next.start }} </a>
+            {% endif %}
+        </span>
+    </div>
+
 
     <div class="game">
         <div class="container">
             <table>
+                <tr>
+                    <th>Место</th>
+                    <th>Прогнозист</th>
+                    <th>Угадано</th>
+                    <th>Процент</th>
+                    <th>Рейтинг</th>
+                </tr>
                 {% for row in table %}
                     <tr>
                         <td> {{ forloop.counter }} <td/>
                         <td> {{ row.name }} </td>
-                        <td> {{ row.result|floatformat:2 }}% </td>
+                        <td> {{ row.res }} from {{ row.total }} </td>
+                        <td> {{ row.percent|floatformat:2 }}% </td>
                         <td> {{ row.rating|floatformat:3 }} </td>
                     </tr>
                 {% endfor %}
@@ -34,21 +51,4 @@
         </div>
     </div>
 
-
-
-    <div class="pagination">
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-            {% endif %}
-
-            <span class="current">
-                Page {{ page_obj.number }} of {{ paginator.num_pages }}.
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">next</a>
-            {% endif %}
-        </span>
-    </div>
 {% endblock %}
