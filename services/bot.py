@@ -1,3 +1,6 @@
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from scipy import stats
 from services.database import DataNba
 import xgboost as xgb
 import numpy as np
@@ -60,6 +63,31 @@ class RandomBot(Bot):
     def make_predict(self, game_list: list[str]):
         predict_list = np.random.randint(2, size=len(game_list))
         return [{'game_id': game_id, 'predict': predict} for game_id, predict in zip(game_list, predict_list)]
+
+
+class LogisticBot(Bot):
+    def __init__(self, param: dict):
+        super().__init__(param)
+        self.param.setdefault('mask', ['_diff_'])
+        self.param.setdefault('count', 20)
+        self.param.setdefault('class_weight', None)
+
+    def fit(self):
+        self.init_data()
+        x_train, y_train = self.get_data(self.param['seasons'])
+        norm = pd.DataFrame(stats.zscore(x_train.values, axis=0), columns=x_train.columns)
+        self.model = LogisticRegression(random_state=0, class_weight=self.param['class_weight']).fit(norm, y_train)
+
+    def make_predict(self, game_list: list[str]):
+        super().make_predict(game_list)
+        idx = self.id_to_index(game_list)
+        self.fit()
+
+        x = self.data.loc[idx][self.get_column_names(self.param['mask'])].dropna()
+        y = self.predict(x).astype(int)
+
+        return [{'game_id': game_id, 'predict': predict}
+                for game_id, predict in zip(x.index.get_level_values('game_id'), y)]
 
 
 class XgbBot(Bot):

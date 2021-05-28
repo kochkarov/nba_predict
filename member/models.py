@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from services.bot import XgbBot, Bot, AlwaysWinBot, AlwaysLoseBot, RandomBot
+from services.bot import XgbBot, Bot, AlwaysWinBot, AlwaysLoseBot, RandomBot, LogisticBot
 
 
 class Human(User):

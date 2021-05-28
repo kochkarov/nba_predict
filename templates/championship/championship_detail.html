@@ -32,11 +32,11 @@
                 </tr>
                 {% for row in table %}
                     <tr>
-                        <td> {{ forloop.counter }} <td/>
-                        <td> {{ row.name }} </td>
-                        <td> {{ row.res }} from {{ row.total }} </td>
-                        <td> {{ row.percent|floatformat:2 }}% </td>
-                        <td> {{ row.rating|floatformat:3 }} </td>
+                        <td> {{ forloop.counter|rjust:'5' }} <td/>
+                        <td> {{ row.name|ljust:'20' }} </td>
+                        <td> {{ row.res|center:"5" }} from {{ row.total|center:"5" }} </td>
+                        <td> {{ row.percent|floatformat:2|rjust:"10" }} % </td>
+                        <td> {{ row.rating|floatformat:3|center:"10" }} </td>
                     </tr>
                 {% endfor %}
             </table>

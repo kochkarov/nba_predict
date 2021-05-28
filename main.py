@@ -91,9 +91,19 @@ def create_bots():
     param = {'class_name': 'RandomBot', 'mask': ['_oh_']}
     Member.objects.update_or_create(name='Crazy', is_bot=1, defaults={'param': param})
 
+    param = {'class_name': 'LogisticBot', 'seasons': [2015, 2016, 2017, 2018, 2019], 'count': 20,
+             'mask': ['_diff_'], 'class_weight': 'balanced'}
+    Member.objects.update_or_create(name='Logistic balanced 5', is_bot=1, defaults={'param': param})
+
+    param = {'class_name': 'LogisticBot', 'seasons': [2015, 2016, 2017, 2018, 2019], 'count': 20,
+             'mask': ['_diff_'], 'class_weight': None}
+    Member.objects.update_or_create(name='Logistic 5', is_bot=1, defaults={'param': param})
+
 
 if __name__ == '__main__':
-    create_championships()
+    create_bots()
+    # delete_championships()
+    # create_championships()
     # champ = Championship.objects.get(name='Test championship')
     # moder = Moderator(champ)
     # moder.make_prediction()
