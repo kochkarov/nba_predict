@@ -25,7 +25,7 @@ SECRET_KEY = "bnfg1&$^+bzm$^m)^te&6%&7h)luh(q(euhhp5m148@&%#sb9%"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.9', '192.168.0.11', '127.0.0.1', 'nba.ping.kiev.ua']
+ALLOWED_HOSTS = ['192.168.0.9', '192.168.0.11', '127.0.0.1', 'nba.ping.kiev.ua', 'localhost']
 
 # Application definition
 
