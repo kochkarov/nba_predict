@@ -56,9 +56,6 @@ class Championship(models.Model):
         agg = self.event.games.all().aggregate(start=Min('game_date'))
         return f'{agg["start"]}'
 
-
-        return
-
     def get_predict_list(self):
         """
         Возвращает список из трех элементов: игра, прогнозы на победу, прогнозы на поражение

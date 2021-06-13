@@ -6,15 +6,39 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Championships</h2>
-    <ul>
-        {% for championship in championships %}
-            <li><a href="{% url 'championship-detail' championship.pk %}">
-                            {{ championship.name }}
-                </a>
-            </li>
-        {% empty %}
-            <li>No championships yet.</li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <div class="championship_list">
+            <h2>Championships</h2>
+            <div class="championship_grid">
+                <div class="championship_grid_header">
+                    <div>Starts In</div>
+                    <div>Name</div>
+                    <div>League</div>
+                    <div>Status</div>
+                </div>
+                <div class="championship_grid_list">
+                    {% for championship in championships %}
+                        <a href="{% url 'championship-detail' championship.pk %}">
+                                        <!-- {{ championship.name }} -->
+                        <div class="championship_item">
+                            {{championship.start}}
+                        </div>
+                        <div class="championship_item">
+                            {{championship.name}}
+                        </div>
+                        <div class="championship_item">
+                            {{championship.league}}
+                        </div>
+                        <div class="championship_item">
+                            {{championship.status}}
+                        </div>
+                        </a>
+                    {% empty %}
+                        <div>No championships yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
 {% endblock %}
