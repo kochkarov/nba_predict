@@ -4,7 +4,6 @@ from django.db import models
 from django.db.models import Max, Min, F
 
 from game.models import Game
-from member.models import Member
 
 
 class Status(enum.IntEnum):
@@ -65,10 +64,11 @@ class Championship(models.Model):
         qs = self.scoreboard.values(game=F('prediction__game_id'), member=F('prediction__member__name'),
                                     predict=F('prediction__predict'))
 
-        win_list = [', '.join(qs.filter(predict=1, game=game.game_id).values_list('member', flat=True))
+        win_list = [qs.filter(predict=1, game=game.game_id).values_list('member', flat=True)
                     for game in games]
-        lose_list = [', '.join(qs.filter(predict=0, game=game.game_id).values_list('member', flat=True))
+        lose_list = [qs.filter(predict=0, game=game.game_id).values_list('member', flat=True)
                      for game in games]
+
         return zip(games, win_list, lose_list)
 
 

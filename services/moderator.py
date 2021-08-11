@@ -4,7 +4,7 @@ from django.db.models import Avg
 from tqdm.auto import tqdm
 
 from game.models import Game
-from member.models import Member
+from member.models import Member, StackBot, EnsembleBot
 from services.database import DataNba
 from championship.models import Championship, League, Score, Event, Prediction
 
@@ -28,22 +28,29 @@ class Moderator:
         return champ
 
     @staticmethod
-    def make_all_prediction():
+    def make_all_prediction(members=None):
         data = DataNba()
         data.init_data(forced_call=True)
         leagues = League.objects.all()
         events = Event.objects.all()
 
+        members = Member.objects.filter(is_bot__in=[1, 2]) if members is None \
+            else Member.objects.filter(name__in=members)
+        bot_dict = {}
+        for predictor in tqdm(members, desc='Fitting...'):
+            predictor.restore_bot()
+            predictor.bot.fit()
+            bot_dict[predictor.name] = predictor
+
         for league in leagues:
-            bot_list = league.members.filter(is_bot=1)
-            for event in tqdm(events):
-                champ, _ = Championship.objects.get_or_create(name=f'{event.__str__()} {league.name}',
-                                                              league=league, event=event)
+            for event in tqdm(events, desc='Predicting...'):
+                champ = Championship.objects.get(league=league, event=event)
                 game_list = event.games.all().values_list('game_id', flat=True)
-                for predictor in bot_list:
-                    predictor.restore_bot()
-                    y_predict = predictor.bot.make_predict(game_list)
-                    Moderator.save_prediction(y_predict, member=predictor, champ=champ)
+                for bot_type in [1, 2]:
+                    bot_list = set(league.members.filter(is_bot=bot_type)) & set(members)
+                    for predictor in bot_list:
+                        y_predict = bot_dict[predictor.name].bot.make_predict(game_list)
+                        Moderator.save_prediction(y_predict, member=predictor, champ=champ)
         return
 
     def make_prediction(self):

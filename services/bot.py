@@ -1,6 +1,11 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
 from scipy import stats
+
 from services.database import DataNba
 import xgboost as xgb
 import numpy as np
@@ -71,6 +76,7 @@ class LogisticBot(Bot):
         self.param.setdefault('mask', ['_diff_'])
         self.param.setdefault('count', 20)
         self.param.setdefault('class_weight', None)
+        self.param.setdefault('neighbors', 5)
 
     def fit(self):
         self.init_data()
@@ -81,13 +87,44 @@ class LogisticBot(Bot):
     def make_predict(self, game_list: list[str]):
         super().make_predict(game_list)
         idx = self.id_to_index(game_list)
-        self.fit()
+        # self.fit()
 
         x = self.data.loc[idx][self.get_column_names(self.param['mask'])].dropna()
         y = self.predict(x).astype(int)
 
         return [{'game_id': game_id, 'predict': predict}
                 for game_id, predict in zip(x.index.get_level_values('game_id'), y)]
+
+
+class KNeighborsBot(LogisticBot):
+    def fit(self):
+        self.init_data()
+        x_train, y_train = self.get_data(self.param['seasons'])
+        norm = pd.DataFrame(stats.zscore(x_train.values, axis=0), columns=x_train.columns)
+        self.model = KNeighborsClassifier(n_neighbors=self.param['neighbors']).fit(norm, y_train)
+
+
+class SVCBot(LogisticBot):
+    def fit(self):
+        self.init_data()
+        x_train, y_train = self.get_data(self.param['seasons'])
+        self.model = SVC(random_state=13, class_weight=self.param['class_weight']).fit(x_train, y_train)
+
+
+class NaiveBayesBot(LogisticBot):
+    def fit(self):
+        self.init_data()
+        x_train, y_train = self.get_data(self.param['seasons'])
+        norm = pd.DataFrame(stats.zscore(x_train.values, axis=0), columns=x_train.columns)
+        self.model = GaussianNB().fit(norm, y_train)
+
+
+class DecisionTreeBot(LogisticBot):
+    def fit(self):
+        self.init_data()
+        x_train, y_train = self.get_data(self.param['seasons'])
+        self.model = DecisionTreeClassifier(random_state=13,
+                                            class_weight=self.param['class_weight']).fit(x_train, y_train)
 
 
 class XgbBot(Bot):
@@ -105,21 +142,10 @@ class XgbBot(Bot):
         self.model = xgb.train(self.param, xgb.DMatrix(x_train, label=y_train),
                                num_boost_round=self.param['num_boost_round'])
 
-    def determination(self):
-        base_score = self.score(np.ones(len(self.y_true)), self.y_true)
-        this_score = self.score(self.y_predict, self.y_true)
-        return (this_score - base_score) / (1 - base_score)
-
-    def rate_prediction(self):
-        self.fit()
-        x, self.y_true = self.get_data([2020])
-        self.y_predict = self.predict(xgb.DMatrix(x))
-        return self.determination()
-
     def make_predict(self, game_list: list[str]):
         super().make_predict(game_list)
         idx = self.id_to_index(game_list)
-        self.fit()
+        # self.fit()
 
         x = self.data.loc[idx][self.get_column_names(self.param['mask'])].dropna()
         y = self.predict(xgb.DMatrix(x)).astype(int)
